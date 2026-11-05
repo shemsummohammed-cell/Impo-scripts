@@ -1,3 +1,3 @@
 Get-ChildItem -Directory | Where-Object Name -notlike '.*' |
-  Group-Object { $_.Name -replace '_V\d+(_\d+)*$','' } |
+  Group-Object { $_.Name -replace '_MRM','' -replace '_V\d+(_\d+)*$','' } |
   ForEach-Object { "{0}:  {1}" -f $_.Name, (($_.Group.Name | Sort-Object) -join ', ') }
