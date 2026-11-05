@@ -1,3 +1,15 @@
-Get-ChildItem -Directory | Where-Object Name -notlike '.*' |
+$rows = foreach ($p in Get-ChildItem -Directory | Where-Object Name -notlike '.*') {
+  $proj = Join-Path $p.FullName '.project'
+  $nat  = if (Test-Path $proj) { Get-Content $proj -Raw } else { '' }
+  $type =
+    if     ($p.Name -match 'LIB$' -or $nat -match 'library')                         { 'Library' }
+    elseif (Get-ChildItem $p.FullName -Recurse -Filter *.mset -EA SilentlyContinue)      { 'MessageSet' }
+    elseif (Get-ChildItem $p.FullName -Recurse -Filter *.policyxml -EA SilentlyContinue) { 'Policy' }
+    elseif (Get-ChildItem $p.FullName -Recurse -Filter *.msgflow -EA SilentlyContinue)   { 'Flow' }
+    else                                                                                 { 'Other' }
+  [pscustomobject]@{ Name = $p.Name; Type = $type }
+}
+
+$rows | Where-Object Type -eq 'Flow' |
   Group-Object { $_.Name -replace '_MRM','' -replace '_V\d+(_\d+)*$','' } |
   ForEach-Object { "{0}:  {1}" -f $_.Name, (($_.Group.Name | Sort-Object) -join ', ') }
